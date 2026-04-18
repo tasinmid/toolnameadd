@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Link</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --border: #242424;
+      --text: #f0f0f0;
+      --text-muted: #6b6b6b;
+      --accent: #e85d04;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Sora', -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 60% 50% at 20% -10%, rgba(232, 93, 4, 0.06), transparent),
+        radial-gradient(ellipse 50% 60% at 90% 110%, rgba(232, 93, 4, 0.03), transparent);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+
+    h1 {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 32px;
+      font-weight: 400;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 48px;
+    }
+
+    .field {
+      display: none;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .field.active {
+      display: flex;
+    }
+
+    input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      font-family: 'Sora', sans-serif;
+      font-size: 16px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s ease;
+      width: 100%;
+      text-align: center;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+    }
+
+    button {
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: 12px;
+      padding: 20px;
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .link-box {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .link-box.active {
+      display: flex;
+    }
+
+    .link-box label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+    }
+
+    .link-display {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 14px;
+      color: var(--text-muted);
+      word-break: break-all;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .link-display:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .link-display.copied {
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    .btn-new {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .btn-new:hover {
+      border-color: var(--text-muted);
+      color: var(--text);
+    }
+
+    .error {
+      color: #ef4444;
+      font-size: 13px;
+      display: none;
+    }
+
+    .error.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Create Link</h1>
+    <p class="subtitle">Share your directory.</p>
+
+    <form id="form">
+      <div class="field active" id="name-field">
+        <input type="text" id="name" placeholder="Enter your name" required autocomplete="off">
+        <button type="submit" id="btn">Create</button>
+      </div>
+      <p class="error" id="error"></p>
+    </form>
+
+    <div class="link-box" id="link-box">
+      <label>Share this link</label>
+      <div class="link-display" id="link-display"></div>
+      <button class="btn-new" id="btn-new">Create Another</button>
+    </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js'
+
+    const supabase = createClient(
+      'https://tzntpxvzkrykfeflqkxv.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6bnRweHZ6a3J5a2ZlZmxxa3h2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MzM0NDIsImV4cCI6MjA5MjAwOTQ0Mn0.KwM6yZF1pI3pNxjQaduG3kmKC7cSsUey8VVzoFwZXt8'
+    )
+
+    const form = document.getElementById('form')
+    const nameField = document.getElementById('name-field')
+    const linkBox = document.getElementById('link-box')
+    const linkDisplay = document.getElementById('link-display')
+    const btnNew = document.getElementById('btn-new')
+    const errorMsg = document.getElementById('error')
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      
+      const name = document.getElementById('name').value.trim()
+      if (!name) return
+
+      document.getElementById('btn').disabled = true
+      errorMsg.classList.remove('show')
+
+      const { data, error } = await supabase
+        .from('ai_tool_directory_lm')
+        .insert({ name: name })
+        .select('id')
+        .single()
+
+      if (error) {
+        errorMsg.textContent = error.message
+        errorMsg.classList.add('show')
+        document.getElementById('btn').disabled = false
+        return
+      }
+
+      const link = 'https://tools.tasinmid.com?id=' + data.id
+      linkDisplay.textContent = link
+      nameField.classList.remove('active')
+      linkBox.classList.add('active')
+    })
+
+    linkDisplay.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(linkDisplay.textContent)
+        linkDisplay.classList.add('copied')
+        linkDisplay.textContent = 'Copied!'
+        setTimeout(() => {
+          linkDisplay.classList.remove('copied')
+          linkDisplay.textContent = 'https://tools.tasinmid.com?id=...'
+        }, 1500)
+      } catch (err) {
+        linkDisplay.classList.add('copied')
+        linkDisplay.textContent = 'Copied!'
+        setTimeout(() => {
+          linkDisplay.classList.remove('copied')
+        }, 1500)
+      }
+    })
+
+    btnNew.addEventListener('click', () => {
+      document.getElementById('name').value = ''
+      document.getElementById('btn').disabled = false
+      linkBox.classList.remove('active')
+      nameField.classList.add('active')
+    })
+  </script>
+</body>
+</html>
